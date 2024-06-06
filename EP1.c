@@ -1,7 +1,7 @@
 #include "driverEP1.h"
 
 char itoregname(int i) {
-	char regnames[] = {'A', 'B', 'C', 'D', '0', '0', 'R', '0', 'X'};
+	char regnames[] = {'A', 'B', 'C', 'D', '0', '0', 'R', 'P', 'X'};
 	return regnames[i];
 }
 
@@ -40,6 +40,7 @@ int processa(short int *M, int memSize)
 		case 0x0003:
 			// JMP X
 			puts("JMP");
+			
 			r = pc + 1;
 			pc = arg;
 			break;
@@ -64,7 +65,7 @@ int processa(short int *M, int memSize)
 			break;
 		case 0x0006:
 			puts("ARIT");
-			unsigned short int *regs[] = {&a, &b, &c, &d, 0, 0, &r, 0};
+			unsigned short int *regs[] = {&a, &b, &c, &d, 0, 0, &r, &psw};
 			unsigned short int arit = (arg & (0x7 << 9)) >> 9;
 			unsigned short int resi = (arg & (0x7 << 6)) >> 6;
 			unsigned short int op1i = (arg & (0x7 << 3)) >> 3;
@@ -82,10 +83,7 @@ int processa(short int *M, int memSize)
 
 			unsigned short int *res = regs[resi];
 			printf("AritOp: %hx | Res: %c | op1: %c | op2: %c\n", arit, itoregname(resi), itoregname(op1i), itoregname(op2i));
-			
 
-			// TODO por algum motivo, o programa de exemplo ta gerando um loop infinito de jumps. culpa minha ou do programa?
-			// TODO qual é o regx?
 			if (res != (unsigned short int) 0) {
 				switch (arit)
 				{
@@ -116,7 +114,7 @@ int processa(short int *M, int memSize)
 				case 6:
 					printf("add(%hx, %hx) ", op1, op2);
 					if (op1 > 0xffff - op2)
-						psw = psw | ((unsigned short int)1 << 15);
+						psw = psw | 0b10000000000000000;
 					if (op1 < op2)
 						psw = psw | ((unsigned short int)1 << 13);
 					else if (op1 == op2)
@@ -158,7 +156,7 @@ int processa(short int *M, int memSize)
 			pc = 0;
 
 		char a;
-		scanf("%c", &a);
+		//scanf("%c", &a);
 		puts("");
 	} while ((ri & 0xF000) != 0xF000);
 }
