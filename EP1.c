@@ -114,6 +114,7 @@ int processa(short int *M, int memSize)
 				case 6:
 					printf("add(%hx, %hx) ", op1, op2);
 					if (op1 > 0xffff - op2)
+						//overflow
 						psw = psw | 0b10000000000000000;
 					if (op1 < op2)
 						psw = psw | ((unsigned short int)1 << 13);
@@ -127,7 +128,9 @@ int processa(short int *M, int memSize)
 					break;
 				case 7:
 					printf("sub(%hx, %hx) ", op1, op2);
-					if (op1 > 0xffff + op2)
+					unsigned short int r = op1 - op2;
+					if (r > op1)
+						//underflow
 						psw = psw | ((unsigned short int)1 << 14);
 					if (op1 < op2)
 						psw = psw | ((unsigned short int)1 << 13);
