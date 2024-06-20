@@ -1,6 +1,7 @@
 #include "driverEP1.h"
 
-char itoregname(int i) {
+char itoregname(int i)
+{
 	char regnames[] = {'A', 'B', 'C', 'D', '0', '0', 'R', 'P', 'X'};
 	return regnames[i];
 }
@@ -40,7 +41,7 @@ int processa(short int *M, int memSize)
 		case 0x0003:
 			// JMP X
 			puts("JMP");
-			
+
 			r = pc + 1;
 			pc = arg;
 			break;
@@ -57,7 +58,6 @@ int processa(short int *M, int memSize)
 
 			break;
 		case 0x0005:
-			// TODO: substituir newR por um dos registradores se eles não forem lidos por outras ops
 			puts("RET");
 			unsigned short int newR = pc + 1;
 			pc = r;
@@ -73,18 +73,23 @@ int processa(short int *M, int memSize)
 			unsigned short int op1 = regs[op1i] == 0 ? 0 : *regs[op1i];
 			unsigned short int op2;
 
-			if (!(op2i & 0b000000000100)) {
+			if (!(op2i & 0b000000000100))
+			{
 				op2i = 8;
 				op2 = 0;
-			} else {
-				printf("op2i: %hx\n", op2i);
-				op2 = *regs[op2i > 1];
+			}
+			else
+			{
+				printf("op2i: %hx\n", op2i & 0b000000000011);
+				op2 = *regs[op2i & 0b000000000011];
 			}
 
 			unsigned short int *res = regs[resi];
 			printf("AritOp: %hx | Res: %c | op1: %c | op2: %c\n", arit, itoregname(resi), itoregname(op1i), itoregname(op2i));
+			psw = 0;
 
-			if (res != (unsigned short int) 0) {
+			if (res != (unsigned short int)0)
+			{
 				switch (arit)
 				{
 				case 0:
@@ -114,14 +119,10 @@ int processa(short int *M, int memSize)
 				case 6:
 					printf("add(%hx, %hx) ", op1, op2);
 					if (op1 > 0xffff - op2)
-						//overflow
-						psw = psw | 0b10000000000000000;
-					if (op1 < op2)
-						psw = psw | ((unsigned short int)1 << 13);
-					else if (op1 == op2)
-						psw = psw | ((unsigned short int)1 << 12);
+						// overflow
+						psw = psw | ((unsigned short int)1 << 15);
 					else
-						psw = psw | ((unsigned short int)1 << 11);
+						psw = psw & ~((unsigned short int)1 << 15);
 
 					*res = op1 + op2;
 
@@ -130,18 +131,23 @@ int processa(short int *M, int memSize)
 					printf("sub(%hx, %hx) ", op1, op2);
 					unsigned short int r = op1 - op2;
 					if (r > op1)
-						//underflow
+						// underflow
 						psw = psw | ((unsigned short int)1 << 14);
-					if (op1 < op2)
-						psw = psw | ((unsigned short int)1 << 13);
-					else if (op1 == op2)
-						psw = psw | ((unsigned short int)1 << 12);
 					else
-						psw = psw | ((unsigned short int)1 << 11);
+						psw = psw & ~((unsigned short int)1 << 14);
 
-					*res = op1 - op2;
+					*res = r;
 					break;
 				}
+
+				psw = psw & 0b1100000000000000;
+				if (op1 < op2)
+					psw = psw | ((unsigned short int)1 << 13);
+				else if (op1 == op2)
+					psw = psw | ((unsigned short int)1 << 12);
+				else
+					psw = psw | ((unsigned short int)1 << 11);
+
 				printf("= %hx\n", *res);
 			}
 			break;
@@ -153,13 +159,13 @@ int processa(short int *M, int memSize)
 		default:
 			break;
 		}
-		if (opcode != 0x0003 && opcode != 0x0004)
+		if (opcode != 0x0003 && opcode != 0x0004 && opcode != 0x0005)
 			pc++;
 		if (pc >= memSize)
 			pc = 0;
 
-		char a;
-		//scanf("%c", &a);
+		//char a;
+		// scanf("%c", &a);
 		puts("");
 	} while ((ri & 0xF000) != 0xF000);
 }
